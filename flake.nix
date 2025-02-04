@@ -7,19 +7,18 @@
       inherit (pkgs) lib;
     in
     {
-      packages.ffmpeg-split-script = pkgs.resholve.writeScriptBin "ffmpeg-split-script" {
-        interpreter = lib.getExe pkgs.bash;
-        inputs = [
-          pkgs.ffmpeg
-          pkgs.jq
-        ];
-      } (builtins.readFile ./ffmpeg-chapter-split.sh);
+      packages = rec {
+        ffmpeg-chapter-split = pkgs.callPackage ./package.nix {};
+        default = ffmpeg-chapter-split;
+      };
       checks.shellcheck = pkgs.runCommandLocal "do-shellcheck" {} ''
+        cd ${./.}
         ${lib.getExe pkgs.shellcheck} \
           --norc \
-          --enable=add-default-case,avoid-nullary-conditions,check-extra-masked-returns,check-set-e-suppressed,check-unassigned-uppercase,deprecate-which,quote-safe-variables,require-double-brackets \
+          --enable=all \
           --shell=bash \
-          ${./ffmpeg-chapter-split.sh}
+          --exclude=SC2250 \
+          ffmpeg-chapter-split.sh config-template.sh
         touch $out
       '';
     }
