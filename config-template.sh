@@ -3,7 +3,7 @@ export input_fn="$1"
 
 #anything not exported is for your convenience and isn't used directly
 input_basename="$(basename -- "$input_fn")"
-input_extension=".${input_basename##*.}"
+input_extension="${input_basename##*.}"
 
 # The format passed to printf to determine the file name for each output chapter
 export output_format="chapter-%03d.$input_extension"

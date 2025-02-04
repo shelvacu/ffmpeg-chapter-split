@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
-set -o inherit_errexit
+if [[ "$FCS_DEBUG" == 1 ]]; then
+  set -xv
+fi
+shopt -s inherit_errexit
 
 info() {
   echo "$@" >&2
@@ -17,7 +20,8 @@ if [[ -n "$FCS_CONFIG_PATH" ]]; then
 fi
 
 find_template() {
-  template_basename="config-template.sh"
+  local template_basename="config-template.sh"
+  local template_fn=""
   if [[ -n "$FCS_CONFIG_TEMPLATE_PATH" ]]; then
     template_fn="$FCS_CONFIG_TEMPLATE_PATH"
   elif [[ -e "$template_basename" ]]; then
@@ -41,7 +45,7 @@ find_template() {
 if [[ ! -e "$config_path" ]]; then
   info "could not find config at $config_path"
   full_config_path="$(readlink -f "$config_path")"
-  read -p "Would you like to create a new config file at $full_config_path? [Y/n]" -n 1 -r
+  read -p "Would you like to create a new config file at $full_config_path? [Y/n] " -n 1 -r
   echo
   if [[ "$REPLY" != "Y" ]] && [[ "$REPLY" != "y" ]] && [[ -n "$REPLY" ]]; then
     die "no config file"
@@ -54,8 +58,8 @@ fi
 # shellcheck source=config-template.sh
 source "$config_path"
 
-if [[ -n "$edited_config" ]]; then
-  die "Invalid config"
+if [[ -z "$edited_config" ]]; then
+  die "Invalid config (edited_config not set)"
 elif [[ "$edited_config" != 1 ]]; then
   die "Edit $config_path and re-run (edited_config != 1)"
 fi
@@ -160,10 +164,14 @@ jq() {
   "$jq_path" "$@"
 }
 
+if [[ -z "$input_fn" ]]; then
+  die "No input file specified! (input_fn is empty/unset)"
+fi
+
 chapters_json="$(ffprobe -hide_banner -v warning -output_format json -show_chapters "$input_fn")"
 
 jq_raw() {
-  jq_expr="$1"
+  local jq_expr="$1"
   echo "$chapters_json" | jq "$jq_expr" -r
 }
 

@@ -22,9 +22,10 @@ in
   "ffmpeg-chapter-split"
   (builtins.readFile ./ffmpeg-chapter-split.sh)
 ).overrideAttrs (prev: {
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = (prev.nativeBuildInputs or []) ++ [ makeWrapper ];
 
-  postInstall = ''
-    makeWrapper $out/bin/ffmpeg-chapter-split ${lib.escapeShellArgs wrapperFlags}
+  buildCommand = ''
+    ${prev.buildCommand or ""}
+    wrapProgram $out/bin/ffmpeg-chapter-split ${lib.escapeShellArgs wrapperFlags}
   '';
 })
